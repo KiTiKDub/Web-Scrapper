@@ -21,3 +21,6 @@ class Article(models.Model):
     category = models.CharField(max_length=32)
     url = models.URLField(max_length=200)
     search = models.ForeignKey(Query, on_delete=models.CASCADE, related_name='Query')
+
+    def __str__(self):
+        return f"{self.search.user} article result for search {self.search.id} ({self.search.search})"

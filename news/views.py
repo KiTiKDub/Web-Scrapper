@@ -87,29 +87,38 @@ def index(request):
     if request.method == 'POST':
         website = request.POST['website']
         query = request.POST['query']
+        query_entry = Query.objects.create(user=request.user, website=website, search=query)
+        query_entry.save()
         links = []
 
-        if website == 'TechCrunch':
+        if website == 'select':
+            return render(request, 'news/index.html', {
+                'form': form,
+                'select': True
+            })
+        
+        if website == 'tech':
             url = 'https://search.techcrunch.com/search;?p={}'.format(query)
             html = requests.get(url)
-            soup = BeautifulSoup(html.text, 'html.parser')
+            soup = BeautifulSoup(html.content, 'lxml')
             articles = soup.find_all('h4', 'pb-10') 
 
-            for i in len(articles):
-                article = articles[i]
-                atag = article.a
+            for i in range(len(articles)):
+                new_url = articles[i]
+                atag = new_url.a
                 links.append(atag.get('href'))
             
             for link in links:
                 html = requests.get(link)
-                soup = BeautifulSoup(html.text, 'html.parser')
+                soup = BeautifulSoup(html.content, 'lxml')
                 headline = soup.find('h1', 'article__title').text.strip()
                 body = soup.find('p', {'id':'speakable-summary'}).text.strip()
-                category = soup.find('div', 'article__primary-category')
-                article_entry = Article.objects.create(headline=headline, body=body, category=category, url=link, query=query)
+                category = soup.find('meta', attrs={'name':'parsely-section'})
+                cat_strip = category['content']
+                article_entry = Article.objects.create(headline=headline, body=body, category=cat_strip, url=link, search=query_entry)
                 article_entry.save()
         
-        elif website == 'Gizmodo':
+        elif website == 'giz':
             url = 'https://gizmodo.com/search?q={}'.format(query)
             html = requests.get(url)
             soup = BeautifulSoup(html.text, 'html.parser')
@@ -149,16 +158,9 @@ def index(request):
                 article_entry = Article.objects.create(headline=headline, body=body, category=category, url=link, query=query)
                 article_entry.save()
         
-        
-
-        if website == 'Select':
-            return render(request, 'news/index.html', {
-                'form': form,
-                'select': True
-            })
-        
     return render(request, 'news/index.html', {
-        'form': form
+        'form': form,
+        'select': False
     })
 
 def likes(request):

@@ -2,7 +2,7 @@
 
 {% block body %}
 
-<form class="search-container" method="get" action="{% url 'index' %}">
+<form class="search-container" method="post" action="{% url 'index' %}">
     {% csrf_token %}
     {{form}}
     <input type="submit" class="btn btn-primary">
@@ -10,7 +10,7 @@
 
 {% if select %}
 <p>Please select a valid website</p>
-{% end if %}
+{% endif %}
 
 <div class="article-container">
     {% for article in articles %}
