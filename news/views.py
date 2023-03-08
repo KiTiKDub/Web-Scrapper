@@ -6,11 +6,11 @@ from django.urls import reverse
 from django.forms import ModelForm
 from django import forms
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from bs4 import BeautifulSoup
-from unicodedata import normalize
 import requests
 
-from .models import Query, User, Article
+from .models import Query, User, Article, Likes, Dislikes
 
 # Create your views here.
 
@@ -32,10 +32,17 @@ class Search(ModelForm):
         model = Query
         fields = ['website', 'query']
 
+@csrf_exempt
 def history(request, query_id):
     query = Query.objects.get(pk=query_id)
     articles = Article.objects.filter(search=query)
     return JsonResponse([article.serialize() for article in articles], safe=False)
+
+
+@csrf_exempt
+def likes(request, article_id):
+    article = Article.objects.get(pk=article_id)
+    return JsonResponse(article.serialize(), safe=False)
 
 def login_view(request):
     if request.method == "POST":
@@ -187,7 +194,12 @@ def index(request):
         })
 
 def likes(request):
-    pass
+    likes = Likes.objects.filter(user_liked_id=request.user.id).values_list('article_id', flat=True).distinct()
+    articles = Article.objects.filter(id__in=likes)
+
+    return render(request, 'news/likes.html', {
+        "articles": articles
+    })
 
 def log(request):
     scrapes = Query.objects.filter(user=request.user).order_by('-time') 

@@ -1,16 +1,34 @@
 document.addEventListener('DOMContentLoaded', function(e) {
     let index = 0;
 
-    document.querySelectorAll('.interact').forEach(function() {
+    //this allows for the colors to change on the thumbs, as well as prevent both of them being on
+    document.querySelectorAll('.interact').forEach(function() { 
         
         let thumbs = document.querySelector(`#art-${index}`).getElementsByTagName('svg')
         let like = thumbs[0]
         let dislike = thumbs[1]
 
 
-        like.addEventListener('click', e => {
+        like.addEventListener('click', () => {
             if(like.style.fill === 'none') {
                 like.style.fill = 'lightblue'
+
+                idFinder = like.id.split('-').pop()
+                
+                userId = document.querySelector('#userID').value
+
+                fetch('/likes', {
+                    method: "POST",
+                    body: JSON.stringify({
+                        article_id: idFinder,
+                        user_liked_id: userId
+
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data)
+                })
 
                 if(dislike.style.fill != 'none') {
                     dislike.style.fill = 'none'
@@ -40,7 +58,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
     document.addEventListener('click', event => {
         let element = event.target
 
-        if(element.tagName === 'TD') {
+        // this is a fetch call to pull up the past search
+        if(element.tagName === 'TD') { 
             fetch(`history/${element.className}`)
             .then(response => response.json())
             .then(data => {
@@ -52,7 +71,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 document.querySelector('.found-articles').append(clear)
                 data.forEach(print)
             })
-        } else if(element.tagName === 'DIV') {
+            //this returns the table 
+        } else if(element.tagName === 'DIV') { 
             document.querySelector('.clear').addEventListener('click', () => {
                 document.querySelector('.table').style.removeProperty('display')
                 document.querySelector('.table').style.width = '100%'
@@ -62,8 +82,8 @@ document.addEventListener('DOMContentLoaded', function(e) {
         
     })
     
-
-    function print(context) {
+    //this prints the fetch call
+    function print(context) { 
         new_div = document.querySelector('.found-articles')
         new_div.style.display = 'block'
         new_div.style.paddingTop = '5rem'

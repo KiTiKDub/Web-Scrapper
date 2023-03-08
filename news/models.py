@@ -34,15 +34,15 @@ class Article(models.Model):
         }
     
 class Likes(models.Model):
-    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='Likes')
-    user_liked = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Person')
+    article_id = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='Likes')
+    user_liked_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Person')
 
     def __str__(self):
-        return f"{self.user_liked} liked {self.article.id} with category {self.article.category}"
+        return f"{self.user_liked_id} liked {self.article_id}"
 
 class Dislikes(models.Model):
-    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='Disikes')
-    user_disliked = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Person_d')
+    article_id = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='Disikes')
+    user_disliked_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Person_d')
 
     def __str__(self):
-        return f"{self.user_liked} disliked {self.article.id} with category {self.article.category}"
+        return f"{self.user_disliked_id}"

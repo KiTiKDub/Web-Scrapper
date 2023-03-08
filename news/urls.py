@@ -10,6 +10,7 @@ urlpatterns = [
     path("register", views.register, name="register"),
 
     #API
-    path("history/<int:query_id>", views.history, name='history')
+    path("history/<int:query_id>", views.history, name='history'),
+    path("likes", views.likes, name='likes')
 
 ]
