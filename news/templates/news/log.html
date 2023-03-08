@@ -2,9 +2,25 @@
 
 {% block body %}
 
-    {% for scrape in scrapes %}
-    <div class="website">Website Search: {{scrape.website}}</div>
-    <div class="search">Query: {{scrape.search}}</div>
-    <div class="time">Time of search {{scrape.time}}</div>
+<div class="wrapper">
+    <div class="left"></div>
+    <table class="table table-striped article-container table-sm table-hover" style="text-align: center;">
+        <tr>
+            <th scope="col">Website Search</th>
+            <th scope="col">Query</th>
+            <th scope="col">Time</th>
+        </tr>
+        {% for scrape in scrapes %}
+        <tr>
+            <td class="{{scrape.id}}">{{scrape.website}}</td>
+            <td class="{{scrape.id}}">{{scrape.search}}</td>
+            <td class="{{scrape.id}}">{{scrape.time}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <div class="found-articles"></div>
+    <div class="right"></div>
+    
+</div>  
 
 {% endblock %}
