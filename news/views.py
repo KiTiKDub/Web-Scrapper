@@ -7,8 +7,11 @@ from django.forms import ModelForm
 from django import forms
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator
 from bs4 import BeautifulSoup
+from itertools import islice
 import requests
+import json
 
 from .models import Query, User, Article, Likes, Dislikes
 
@@ -32,17 +35,59 @@ class Search(ModelForm):
         model = Query
         fields = ['website', 'query']
 
-@csrf_exempt
+
 def history(request, query_id):
     query = Query.objects.get(pk=query_id)
     articles = Article.objects.filter(search=query)
     return JsonResponse([article.serialize() for article in articles], safe=False)
 
+@csrf_exempt
+def liked(request):
+    data = json.loads(request.body)
+    article_id = data.get("article_id", "")
+    article = Article.objects.get(pk=article_id)
+    liked_id = data.get("user_liked_id", "")
+    user = User.objects.get(pk=liked_id)
+
+    try:
+        check_dislike = Dislikes.objects.get(article_id=article, user_disliked_id=user)
+    except:
+        check_dislike = None
+
+    if check_dislike is not None:
+        check_dislike.delete()
+
+    try:
+        new_like = Likes.objects.create(article_id=article, user_liked_id=user)
+        new_like.save()
+    except:
+        return JsonResponse({"message": "You've already liked this Article!"}, status = 400)
+
+    return JsonResponse({"message": "Article Liked Successfully"}, status=201)
 
 @csrf_exempt
-def likes(request, article_id):
+def disliked(request):
+    data = json.loads(request.body)
+    article_id = data.get("article_id", "")
     article = Article.objects.get(pk=article_id)
-    return JsonResponse(article.serialize(), safe=False)
+    disliked_id = data.get("user_disliked_id", "")
+    user = User.objects.get(pk=disliked_id)
+
+    try:
+        check_like = Likes.objects.get(article_id=article, user_liked_id=user)
+    except:
+        check_like = None
+
+    if check_like is not None:
+        check_like.delete()
+        
+    try:
+        new_dislike = Dislikes.objects.create(article_id=article, user_disliked_id=user)
+        new_dislike.save()
+    except:
+        return JsonResponse({"message": "You've already disliked this Article!"}, status = 400)
+
+    return JsonResponse({"message": "Article Disliked Successfully"}, status=201)
 
 def login_view(request):
     if request.method == "POST":
@@ -93,14 +138,14 @@ def register(request):
     else:
         return render(request, "news/register.html")
 
-
 def index(request):
     form = Search()
     last_search = Query.objects.filter(user=request.user).latest('time')
     results = Article.objects.filter(search=last_search)
+    paginator = Paginator(results, 10)
 
-    """ if request.method == 'GET':
-        results = None """
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     if request.method == 'POST':
 
@@ -190,15 +235,48 @@ def index(request):
     else:  
         return render(request, 'news/index.html', {
             'form': form,
-            'articles': results
+            'articles': page_obj,
         })
-
+    
 def likes(request):
     likes = Likes.objects.filter(user_liked_id=request.user.id).values_list('article_id', flat=True).distinct()
-    articles = Article.objects.filter(id__in=likes)
+    dislikes = Dislikes.objects.filter(user_disliked_id=request.user.id).values_list('article_id', flat=True).distinct()
+    articles = Article.objects.filter(id__in=likes).order_by("-Likes")
+    dis_articles = Article.objects.filter(id__in=dislikes).order_by("-Dislikes")
+    paginator = Paginator(articles, 10)
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    cat_counts = {}
+    dis_cat_counts = {}
+
+    for article in articles:
+        if article.category not in cat_counts:
+            cat_counts[article.category] = {
+                'category': article.category,
+                'count': 0
+            }
+        cat_counts[article.category]['count'] += 1
+
+    sort_cat_count = dict(sorted(cat_counts.items(), key=lambda item:item[1]['count'], reverse=True))
+    top_five = dict(islice(sort_cat_count.items(), 5))
+
+    for article in dis_articles:
+        if article.category not in dis_cat_counts:
+            dis_cat_counts[article.category] = {
+                'category': article.category,
+                'count': 0
+            }
+        dis_cat_counts[article.category]['count'] += 1
+
+    sort_dis_cat_count = dict(sorted(dis_cat_counts.items(), key=lambda item:item[1]['count'], reverse=True))
+    dis_top_five = dict(islice(sort_dis_cat_count.items(), 5))
 
     return render(request, 'news/likes.html', {
-        "articles": articles
+        "articles": page_obj,
+        "counts": top_five.values(),
+        "dis_counts": dis_top_five.values()
     })
 
 def log(request):

@@ -5,6 +5,7 @@
     align-items: center;
     font-size: 32px;
     column-gap: 1em;
+    padding-top: 2rem;
 }
 
 .name {
@@ -46,7 +47,7 @@
 }
 
 .article-container {
-    margin-top: 50px;
+    margin-top: 25px;
 
 }
 
@@ -96,5 +97,36 @@ svg {
 .clear {
     margin-bottom: 20px;
     text-align: center;
+    font-size: 24px;
+}
+
+svg:hover {
+    cursor: pointer;
+}
+
+.cat-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 25px;
+    flex-direction: column;
+}
+
+.clear:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.title {
+    text-decoration: underline;
+    font-size: 18px;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 25px;
+    margin-bottom: 25px;
     font-size: 24px;
 }

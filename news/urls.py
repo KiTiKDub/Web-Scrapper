@@ -11,6 +11,7 @@ urlpatterns = [
 
     #API
     path("history/<int:query_id>", views.history, name='history'),
-    path("likes", views.likes, name='likes')
+    path("liked", views.liked, name='liked'),
+    path("disliked", views.disliked, name="disliked")
 
 ]

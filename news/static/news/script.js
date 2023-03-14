@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function(e) {
     let index = 0;
+    userId = document.querySelector('#userID').value
+    
 
     //this allows for the colors to change on the thumbs, as well as prevent both of them being on
     document.querySelectorAll('.interact').forEach(function() { 
@@ -10,52 +12,69 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 
         like.addEventListener('click', () => {
-            if(like.style.fill === 'none') {
-                like.style.fill = 'lightblue'
+            if(like.getAttribute('fill') === 'none') {
+                like.setAttribute('fill', 'lightblue')
 
                 idFinder = like.id.split('-').pop()
-                
-                userId = document.querySelector('#userID').value
 
-                fetch('/likes', {
+                fetch('/liked', {
                     method: "POST",
                     body: JSON.stringify({
                         article_id: idFinder,
-                        user_liked_id: userId
-
+                        user_liked_id: userId,
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data)
+                    console.log(data.message)
+                    if(data.message === "You've already liked this Article!") {
+                        D = document.createElement('div')
+                        text = document.createTextNode("You've already liked this Article!")
+                        D.appendChild(text)
+                        like.replaceWith(D)
+                    } 
+ 
                 })
 
-                if(dislike.style.fill != 'none') {
-                    dislike.style.fill = 'none'
+                if(dislike.getAttribute('fill') != 'none') {
+                    dislike.setAttribute('fill', 'none')
                 }
-            }
-            else {
-                like.style.fill = 'none'
             }
         })
 
         dislike.addEventListener('click', () => {
-            if(dislike.style.fill === 'none') {
-                dislike.style.fill = '#FFCCCB'
+            if(dislike.getAttribute('fill') === 'none') {
+                dislike.setAttribute('fill', '#FFCCCB')
 
-                if(like.style.fill != 'none') {
-                    like.style.fill = 'none'
+                idFinder = dislike.id.split('-').pop()
+
+                fetch('/disliked', {
+                    method: "POST",
+                    body: JSON.stringify({
+                        article_id: idFinder,
+                        user_disliked_id: userId,
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.message === "You've already disliked this Article!") {
+                        D = document.createElement('div')
+                        text = document.createTextNode("You've already disliked this Article!")
+                        D.appendChild(text)
+                        dislike.replaceWith(D)
+                    } 
+                })
+
+                if(like.getAttribute('fill') != 'none') {
+                    like.setAttribute('fill', 'none')
                 }
-            }
-            else {
-                dislike.style.fill = 'none'
             }
         })
 
         index = index + 1;
     })
 
-    document.addEventListener('click', event => {
+     document.addEventListener('click', event => {
         let element = event.target
 
         // this is a fetch call to pull up the past search
@@ -73,14 +92,12 @@ document.addEventListener('DOMContentLoaded', function(e) {
             })
             //this returns the table 
         } else if(element.tagName === 'DIV') { 
-            document.querySelector('.clear').addEventListener('click', () => {
-                document.querySelector('.table').style.removeProperty('display')
-                document.querySelector('.table').style.width = '100%'
-                document.querySelector('.found-articles').style.display = 'none'
-            })
+            document.querySelector('.table').style.removeProperty('display')
+            document.querySelector('.table').style.width = '100%'
+            document.querySelector('.found-articles').style.display = 'none'
         }
         
-    })
+    }) 
     
     //this prints the fetch call
     function print(context) { 

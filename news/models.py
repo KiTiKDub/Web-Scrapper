@@ -33,16 +33,32 @@ class Article(models.Model):
             "url": self.url
         }
     
+    class Meta:
+        ordering = ['-id']
+    
 class Likes(models.Model):
     article_id = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='Likes')
     user_liked_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Person')
 
     def __str__(self):
         return f"{self.user_liked_id} liked {self.article_id}"
+    
+    def serialize_like(self):
+        return {
+            "article_id": self.article_id,
+            "user_liked_id": self.user_liked_id
+        }
+    
+    class Meta:
+        unique_together = ["article_id", "user_liked_id"]
+    
 
 class Dislikes(models.Model):
-    article_id = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='Disikes')
+    article_id = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='Dislikes')
     user_disliked_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Person_d')
 
     def __str__(self):
-        return f"{self.user_disliked_id}"
+        return f"{self.user_disliked_id} disliked {self.article_id}"
+    
+    class Meta:
+        unique_together = ["article_id", "user_disliked_id"]
