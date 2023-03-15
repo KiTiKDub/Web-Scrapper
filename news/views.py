@@ -139,17 +139,24 @@ def register(request):
             })
         login(request, user)
         return HttpResponseRedirect(reverse("index"))
+    
     else:
         return render(request, "news/register.html")
 
 def index(request):
     form = Search() #create the web search form
-    last_search = Query.objects.filter(user=request.user).latest('time') #populate the page with the search
-    results = Article.objects.filter(search=last_search)
-    paginator = Paginator(results, 10)
+    try: 
+        last_search = Query.objects.filter(user=request.user).latest('time') #populate the page with the search
+        results = Article.objects.filter(search=last_search)
+        paginator = Paginator(results, 10)
 
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+    except:
+        last_search = None
+        results = None
+        page_obj = None
+    
 
     if request.method == 'POST':
 
@@ -166,7 +173,6 @@ def index(request):
         links = []
 
         if website == 'TechCrunch':
-            
             #search the website and grab all articles that appear
             url = 'https://search.techcrunch.com/search;?p={}'.format(query)
             html = requests.get(url)
@@ -194,10 +200,11 @@ def index(request):
         
         #same logic as above
         elif website == 'Gizmodo':
+            print('in here')
             url = 'https://gizmodo.com/search?blogId=4&q={}'.format(query)
             html = requests.get(url)
             soup = BeautifulSoup(html.content, 'lxml')
-            articles = soup.find_all('div', 'cw4lnv-5')
+            articles = soup.find_all('div', 'sc-cw4lnv-5')
 
             for i in range(len(articles)):
                 article = articles[i]
@@ -214,7 +221,7 @@ def index(request):
                 else:
                     headline = soup.find('h1', 'sc-1efpnfq-0').text.strip()
                     body = soup.find('p', 'sc-77igqf-0').text.strip()
-                    category = soup.find('div', 'fek4t4-1').text.strip()
+                    category = soup.find('div', 'sc-fek4t4-1').text.strip()
                     article_entry = Article.objects.create(headline=headline, body=body, category=category, url=link, search=query_entry)
                     article_entry.save()
 
@@ -260,7 +267,13 @@ def likes(request):
     paginator = Paginator(articles, 10)
 
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+
+    # Do this to hide useless HTML until serach
+    if articles:
+        page_obj = paginator.get_page(page_number)
+    else:
+        page_obj = None
+    
 
     cat_counts = {}
     dis_cat_counts = {}

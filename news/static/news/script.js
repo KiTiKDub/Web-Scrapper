@@ -3,11 +3,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
     userId = document.querySelector('#userID').value
     
     //This is used to tell the user that they did not select a valid website
-    document.querySelector('.btn').addEventListener('click', () => {
-        if(document.querySelector('.form-select').value === 'Select') {
-            alert("Please select a valid Website")
-        }
-    })
+    if(document.querySelector('.btn')) {
+        document.querySelector('.btn').addEventListener('click', () => {
+            if(document.querySelector('.form-select').value === 'Select') {
+                alert("Please select a valid Website")
+            }
+        })
+    }
+    
 
     //this allows for the colors to change on the thumbs, as well as prevent both of them being on
     document.querySelectorAll('.interact').forEach(function() { 

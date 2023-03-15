@@ -33,6 +33,7 @@
     <div class="right"></div>
 </div>
 
+{% if articles != None %}
 <div class="pagination">
     <span class="step-links">
         {% if articles.has_previous %}
@@ -50,6 +51,7 @@
         {% endif %}
     </span>
 </div>
+{% endif %}
 
 <input type="hidden" id="userID" value="{{request.user.id}}">
 
