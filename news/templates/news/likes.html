@@ -2,23 +2,20 @@
 
 {% block body %}
 
-<div class=cat-wrapper> <!--Make categories in table-->
-    <div class="categories">
-        <span class="title">Most Liked Categories:</span>
-        {% for value in counts %}
-            <strong>{{value.category}}</strong>: {{value.count}}
-        {% endfor %}
-    </div>
-    <div class="dis-categories">
-        <span class="title">Most Disliked Categories:</span>
-        {% for value in dis_counts %}
-            <strong>{{value.category}}</strong>: {{value.count}}
-        {% endfor %}
-    </div>
-</div>
+<!-- <div class=cat-wrapper> Make categories in table
+    
+    
+</div> -->
 
     <div class="wrapper">
-        <div class="left"></div>
+        <div class="left">
+            <div class="categories">
+                <span class="title">Most Liked Categories:</span>
+                {% for value in counts %}
+                <div><strong>{{value.category}}</strong>: {{value.count}}</div>
+                {% endfor %}
+            </div>
+        </div>
         <div class="article-container">
             {% for article in articles %}
             <div class="article">
@@ -40,7 +37,14 @@
             </div>
             {% endfor %}
         </div>
-        <div class="right"></div>
+        <div class="right">
+            <div class="categories">
+                <span class="title">Most Disliked Categories:</span>
+                {% for value in dis_counts %}
+                <div><strong>{{value.category}}</strong>: {{value.count}}</div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 
     <input type="hidden" id="userID" value="{{request.user.id}}">

@@ -1,21 +1,28 @@
 document.addEventListener('DOMContentLoaded', function(e) {
-    let index = 0;
+    let index = 0; //This is used for getting the rights likes and dislikes
     userId = document.querySelector('#userID').value
     
+    //This is used to tell the user that they did not select a valid website
+    document.querySelector('.btn').addEventListener('click', () => {
+        if(document.querySelector('.form-select').value === 'Select') {
+            alert("Please select a valid Website")
+        }
+    })
 
     //this allows for the colors to change on the thumbs, as well as prevent both of them being on
     document.querySelectorAll('.interact').forEach(function() { 
         
+        //grab likes and dislikes buttons
         let thumbs = document.querySelector(`#art-${index}`).getElementsByTagName('svg')
         let like = thumbs[0]
         let dislike = thumbs[1]
 
-
+        //creates the click event
         like.addEventListener('click', () => {
             if(like.getAttribute('fill') === 'none') {
                 like.setAttribute('fill', 'lightblue')
 
-                idFinder = like.id.split('-').pop()
+                idFinder = like.id.split('-').pop() //gets the article.id from django
 
                 fetch('/liked', {
                     method: "POST",
@@ -27,6 +34,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
                 .then(response => response.json())
                 .then(data => {
                     console.log(data.message)
+                    //if statement to update the svg thumb to a div informing the user if they liked the article already
                     if(data.message === "You've already liked this Article!") {
                         D = document.createElement('div')
                         text = document.createTextNode("You've already liked this Article!")
@@ -36,12 +44,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
  
                 })
 
+                //remove dislike color
                 if(dislike.getAttribute('fill') != 'none') {
                     dislike.setAttribute('fill', 'none')
                 }
             }
         })
 
+        //same logic as like clicks, just reverse
         dislike.addEventListener('click', () => {
             if(dislike.getAttribute('fill') === 'none') {
                 dislike.setAttribute('fill', '#FFCCCB')

@@ -104,12 +104,15 @@ svg:hover {
     cursor: pointer;
 }
 
-.cat-wrapper {
+.categories {
     display: flex;
     justify-content: center;
     align-items: center;
     margin-top: 25px;
     flex-direction: column;
+    position: fixed;
+    top: 40%;
+    margin-left: 4em;
 }
 
 .clear:hover {

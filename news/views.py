@@ -35,12 +35,13 @@ class Search(ModelForm):
         model = Query
         fields = ['website', 'query']
 
-
+#Grab the results of a past query, used on the scape log page
 def history(request, query_id):
     query = Query.objects.get(pk=query_id)
     articles = Article.objects.filter(search=query)
     return JsonResponse([article.serialize() for article in articles], safe=False)
 
+# This creates the or destroys a like entry
 @csrf_exempt
 def liked(request):
     data = json.loads(request.body)
@@ -49,6 +50,7 @@ def liked(request):
     liked_id = data.get("user_liked_id", "")
     user = User.objects.get(pk=liked_id)
 
+    #Check for a dislike, if it is there, delete it
     try:
         check_dislike = Dislikes.objects.get(article_id=article, user_disliked_id=user)
     except:
@@ -57,6 +59,7 @@ def liked(request):
     if check_dislike is not None:
         check_dislike.delete()
 
+    # Try to like the article, if it is there, tell the user, and do not save it.
     try:
         new_like = Likes.objects.create(article_id=article, user_liked_id=user)
         new_like.save()
@@ -65,6 +68,7 @@ def liked(request):
 
     return JsonResponse({"message": "Article Liked Successfully"}, status=201)
 
+#Same logic as liked
 @csrf_exempt
 def disliked(request):
     data = json.loads(request.body)
@@ -139,8 +143,8 @@ def register(request):
         return render(request, "news/register.html")
 
 def index(request):
-    form = Search()
-    last_search = Query.objects.filter(user=request.user).latest('time')
+    form = Search() #create the web search form
+    last_search = Query.objects.filter(user=request.user).latest('time') #populate the page with the search
     results = Article.objects.filter(search=last_search)
     paginator = Paginator(results, 10)
 
@@ -151,43 +155,49 @@ def index(request):
 
         website = request.POST['website']
 
+        #Don't allow user to make a query with 'Select'
         if website == 'Select':
             return HttpResponseRedirect(reverse("index"))
 
+        #create the query db entry
         query = request.POST['query']
         query_entry = Query.objects.create(user=request.user, website=website, search=query)
         query_entry.save()
         links = []
 
         if website == 'TechCrunch':
+            
+            #search the website and grab all articles that appear
             url = 'https://search.techcrunch.com/search;?p={}'.format(query)
             html = requests.get(url)
             soup = BeautifulSoup(html.content, 'lxml')
             articles = soup.find_all('h4', 'pb-10') 
 
+            #grab the url of that article to get to the content
             for i in range(len(articles)):
                 new_url = articles[i]
                 atag = new_url.a
                 links.append(atag.get('href'))
             
+            #Scrape through each article to find wanted info, and save it.
             for link in links:
                 html = requests.get(link)
                 soup = BeautifulSoup(html.content, 'lxml')
                 headline = soup.find('h1', 'article__title').text.strip()
                 body = soup.find('p', {'id':'speakable-summary'}).text.strip()
                 category = soup.find('meta', attrs={'name':'parsely-section'})
-                cat_strip = category['content']
+                cat_strip = category['content']     #Get needed category out of the meta tag
                 article_entry = Article.objects.create(headline=headline, body=body, category=cat_strip, url=link, search=query_entry)
                 article_entry.save()
         
             return HttpResponseRedirect(reverse("index"))
         
+        #same logic as above
         elif website == 'Gizmodo':
             url = 'https://gizmodo.com/search?blogId=4&q={}'.format(query)
             html = requests.get(url)
             soup = BeautifulSoup(html.content, 'lxml')
             articles = soup.find_all('div', 'cw4lnv-5')
-             #need to put in code to catch it if it is a video 
 
             for i in range(len(articles)):
                 article = articles[i]
@@ -198,6 +208,7 @@ def index(request):
                 html = requests.get(link)
                 soup = BeautifulSoup(html.content, 'lxml')
 
+                #If the article is a video, it stops the program, this find will skip that article
                 if soup.find('h1', 'sc-1efpnfq-0') is None:
                     donothing = 0
                 else:
@@ -209,6 +220,7 @@ def index(request):
 
             return HttpResponseRedirect(reverse('index'))
         
+        #same logic as above
         else:
             url = 'https://www.digitaltrends.com/?s={}'.format(query) # change to something that doesn't have a pay wall
             html = requests.get(url)
@@ -227,7 +239,7 @@ def index(request):
                 headline = soup.find('h1', 'b-headline__title').text.strip()
                 body = soup.find('article', 'b-content').p.text.strip()
                 category = soup.find('meta', attrs={'content':'2'})
-                cat_clean = category.parent.span.text.strip()
+                cat_clean = category.parent.span.text.strip() #Couldn't grab category directly, had to travel up the Dom to grab it
                 article_entry = Article.objects.create(headline=headline, body=body, category=cat_clean, url=link, search=query_entry)
                 article_entry.save()
         return HttpResponseRedirect(reverse("index"))
@@ -239,6 +251,8 @@ def index(request):
         })
     
 def likes(request):
+    
+    #grabs the like articles for display, and dislikes for category showing
     likes = Likes.objects.filter(user_liked_id=request.user.id).values_list('article_id', flat=True).distinct()
     dislikes = Dislikes.objects.filter(user_disliked_id=request.user.id).values_list('article_id', flat=True).distinct()
     articles = Article.objects.filter(id__in=likes).order_by("-Likes")
@@ -251,6 +265,7 @@ def likes(request):
     cat_counts = {}
     dis_cat_counts = {}
 
+    #Create dictionary to grab the most liked categories
     for article in articles:
         if article.category not in cat_counts:
             cat_counts[article.category] = {
@@ -259,9 +274,10 @@ def likes(request):
             }
         cat_counts[article.category]['count'] += 1
 
-    sort_cat_count = dict(sorted(cat_counts.items(), key=lambda item:item[1]['count'], reverse=True))
-    top_five = dict(islice(sort_cat_count.items(), 5))
+    sort_cat_count = dict(sorted(cat_counts.items(), key=lambda item:item[1]['count'], reverse=True)) #Order the categories
+    top_five = dict(islice(sort_cat_count.items(), 5)) #Only return the top 5
 
+    #same logic as likes
     for article in dis_articles:
         if article.category not in dis_cat_counts:
             dis_cat_counts[article.category] = {
@@ -275,11 +291,13 @@ def likes(request):
 
     return render(request, 'news/likes.html', {
         "articles": page_obj,
-        "counts": top_five.values(),
-        "dis_counts": dis_top_five.values()
+        "counts": top_five.values(), #return values so it's easier to format
+        "dis_counts": dis_top_five.values() #return values so it's easier to format
     })
 
 def log(request):
+    
+    #default view to see all the logs made by the user
     scrapes = Query.objects.filter(user=request.user).order_by('-time') 
 
     return render(request, 'news/log.html', {
